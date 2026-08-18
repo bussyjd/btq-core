@@ -294,10 +294,10 @@ class P2MRTest(BTQTestFramework):
         pk = ECKey(); pk.generate()
         xo, _ = compute_xonly_pubkey(pk.get_bytes())
 
-        print(sub('5a. P2TR must return exact error message'))
-        print(why('The error message distinguishes "Dilithium blocked in tapscript" from other failures.'))
+        print(sub('5a. P2TR must return exact P2MR-only error message'))
+        print(why('The error message distinguishes "Dilithium requires P2MR" from other failures.'))
         print(how('Attempt OP_CHECKSIGDILITHIUM in P2TR and check the exact error string.'))
-        expected_msg = 'Dilithium opcodes are not available in tapscript'
+        expected_msg = 'Dilithium opcodes are only available in P2MR tapscript (witness v2)'
         print(expect(f'Error contains: "{expected_msg}"'))
         leaf = CScript([OP_TRUE, OP_TRUE, OP_CHECKSIGDILITHIUM])
         tap = taproot_construct(xo, [("l", leaf)])
