@@ -688,9 +688,11 @@ void FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& fee_out,
             }
             int64_t weight = weight_v.getInt<int64_t>();
             const int64_t min_input_weight = GetTransactionInputWeight(CTxIn());
-            CHECK_NONFATAL(min_input_weight == 165);
+            CHECK_NONFATAL(min_input_weight == (41 * WITNESS_SCALE_FACTOR) + 1);
             if (weight < min_input_weight) {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, weight cannot be less than 165 (41 bytes (size of outpoint + sequence + empty scriptSig) * 4 (witness scaling factor)) + 1 (empty witness)");
+                throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf(
+                    "Invalid parameter, weight cannot be less than %d (41 bytes (size of outpoint + sequence + empty scriptSig) * %d (witness scaling factor)) + 1 (empty witness)",
+                    min_input_weight, WITNESS_SCALE_FACTOR));
             }
             if (weight > MAX_STANDARD_TX_WEIGHT) {
                 throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Invalid parameter, weight cannot be greater than the maximum standard tx weight of %d", MAX_STANDARD_TX_WEIGHT));
