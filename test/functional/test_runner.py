@@ -317,6 +317,7 @@ BASE_SCRIPTS = [
     'wallet_crosschain.py',
     'mining_basic.py',
     'feature_signet.py',
+    'btq_signet_identity.py',
     'wallet_signet_wif_prefix.py --legacy-wallet',
     'wallet_implicitsegwit.py --legacy-wallet',
     'rpc_named_arguments.py',
