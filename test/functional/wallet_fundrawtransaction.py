@@ -1082,10 +1082,10 @@ class RawTransactionsTest(BTQTestFramework):
         funded_tx4 = wallet.fundrawtransaction(raw_tx, input_weights=[{"txid": ext_utxo["txid"], "vout": ext_utxo["vout"], "weight": high_input_weight}], fee_rate=10)
         input_add_weight = high_input_weight - (41 * WITNESS_SCALE_FACTOR)
         tx4_weight = wallet.decoderawtransaction(funded_tx4["hex"])["weight"] + input_add_weight
-        tx4_vsize = int(ceil(tx4_weight / 4))
+        tx4_vsize = int(ceil(tx4_weight / WITNESS_SCALE_FACTOR))
         assert_fee_amount(funded_tx4["fee"], tx4_vsize, Decimal(0.0001))
 
-        # Funding with weight at csuint boundaries should not cause problems
+        # Funding with the minimum weight and a weight past the csuint boundary should not cause problems
         funded_tx = wallet.fundrawtransaction(raw_tx, input_weights=[{"txid": ext_utxo["txid"], "vout": ext_utxo["vout"], "weight": min_input_weight}], fee_rate=2)
         funded_tx = wallet.fundrawtransaction(raw_tx, input_weights=[{"txid": ext_utxo["txid"], "vout": ext_utxo["vout"], "weight": 65539}], fee_rate=2)
 
