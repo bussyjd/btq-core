@@ -49,6 +49,35 @@ class P2MRRPCTest(BTQTestFramework):
         assert_equal(wallet.getp2mrinfo(created["p2mr_id"])["id"], created["p2mr_id"])
         assert_raises_rpc_error(-8, "unknown p2mr_id", wallet.getp2mrinfo, "does-not-exist")
 
+        self.log.info("Register internal P2MR metadata without classifying it as receive")
+        internal_tree = [{
+            "depth": 0,
+            "leaf_version": LEAF_VERSION_TAPSCRIPT,
+            "script": "5151",  # distinct tracked tree
+        }]
+        node.createwallet(wallet_name="p2mr-watch", disable_private_keys=True, blank=True, descriptors=True)
+        watch = node.get_wallet_rpc("p2mr-watch")
+        internal = watch.getnewp2mraddress(internal_tree, "", True)
+        descriptor = watch.getdescriptorinfo(f"addr({internal['address']})")["descriptor"]
+        imported = watch.importdescriptors([{
+            "desc": descriptor,
+            "timestamp": "now",
+            "active": False,
+            "internal": True,
+        }])
+        assert imported[0]["success"], imported
+        internal_info = watch.getaddressinfo(internal["address"])
+        assert_equal(internal_info["ismine"], True)
+        assert_equal(internal_info["ischange"], True)
+        assert_equal(internal_info["labels"], [])
+        promoted = watch.getnewp2mraddress(internal_tree, "promoted-receive", False)
+        assert_equal(promoted["p2mr_id"], internal["p2mr_id"])
+        promoted_info = watch.getaddressinfo(promoted["address"])
+        assert_equal(promoted_info["ischange"], False)
+        assert_equal(promoted_info["labels"], ["promoted-receive"])
+        assert_raises_rpc_error(-4, "already classified as receive",
+                                watch.getnewp2mraddress, internal_tree, "", True)
+
         self.log.info("Fund through convenience RPC")
         funded = wallet.sendtop2mr(tree, Decimal("1.0"), "rpc-p2mr-fund")
         assert funded["txid"]

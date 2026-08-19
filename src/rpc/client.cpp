@@ -306,6 +306,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "addnode", 2, "v2transport" },
     // P2MR wallet RPCs
     { "getnewp2mraddress", 0, "tree" },
+    { "getnewp2mraddress", 2, "internal" },
     { "sendtop2mr", 0, "tree" },
     { "sendtop2mr", 1, "amount" },
     { "sendtop2mr", 5, "subtractfeefromamount" },

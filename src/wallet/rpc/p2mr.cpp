@@ -46,6 +46,7 @@ RPCHelpMan getnewp2mraddress()
         {
             {"tree", RPCArg::Type::ARR, RPCArg::Optional::NO, "P2MR tree leaves in DFS order", std::vector<RPCArg>{}, RPCArgOptions{}},
             {"label", RPCArg::Type::STR, RPCArg::Default{""}, "Optional label"},
+            {"internal", RPCArg::Type::BOOL, RPCArg::Default{false}, "Treat this destination as change and do not add it to the receive address book"},
         },
         RPCResult{
             RPCResult::Type::OBJ, "", "",
@@ -63,11 +64,21 @@ RPCHelpMan getnewp2mraddress()
 
             const auto leaves = ParseP2MRTreeFromUniValue(request.params[0]);
             const std::string label = request.params[1].isNull() ? "" : LabelFromValue(request.params[1]);
+            const bool internal = request.params[2].isNull() ? false : request.params[2].get_bool();
 
             LOCK(pwallet->cs_wallet);
-            auto created = CreateP2MR(*pwallet, leaves, label);
+            auto created = CreateP2MR(*pwallet, leaves, label, /*add_to_address_book=*/!internal);
             if (!created) {
                 throw JSONRPCError(RPC_WALLET_ERROR, util::ErrorString(created).original);
+            }
+            const bool classified_receive = pwallet->FindAddressBookEntry(created->dest) != nullptr;
+            if (internal && classified_receive) {
+                throw JSONRPCError(RPC_WALLET_ERROR,
+                                   "existing P2MR destination is already classified as receive");
+            }
+            if (!internal && !classified_receive &&
+                !pwallet->SetAddressBook(created->dest, label, AddressPurpose::RECEIVE)) {
+                throw JSONRPCError(RPC_WALLET_ERROR, "failed to classify P2MR destination as receive");
             }
 
             UniValue out(UniValue::VOBJ);
